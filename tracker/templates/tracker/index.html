@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Crypto Price Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 2rem;}
+    table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f8f8f8; }
+    .container { max-width: 1100px; margin: auto; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Crypto Price Tracker</h1>
+
+  <h3>Prices (auto-refresh)</h3>
+  <table id="prices-table">
+    <thead><tr><th>Symbol</th><th>Name</th><th>Price (USD)</th><th>Last updated</th></tr></thead>
+    <tbody>
+      {% for p in prices %}
+      <tr data-crypto-id="{{ p.id }}">
+        <td>{{ p.symbol }}</td>
+        <td>{{ p.name }}</td>
+        <td class="price">{{ p.price|default:"-" }}</td>
+        <td class="ts">{{ p.timestamp|default:"-" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Chart</h3>
+  <label for="crypto-select">Select coin:</label>
+  <select id="crypto-select">
+    {% for c in cryptos %}
+      <option value="{{ c.id }}">{{ c.name }} ({{ c.symbol }})</option>
+    {% endfor %}
+  </select>
+  <canvas id="priceChart" width="900" height="300"></canvas>
+
+  <h3>Create Alert</h3>
+  <form id="alert-form" method="post" action="{% url 'tracker:create_alert' %}">
+    {% csrf_token %}
+    {{ alert_form.as_p }}
+    <button type="submit">Create Alert</button>
+  </form>
+</div>
+
+<script>
+const API_PRICES = "{% url 'tracker:api_prices' %}";
+const API_CHART = (id) => `/api/chart/${id}/`;
+const AUTO_REFRESH_INTERVAL = 15000; // 15s
+
+async function refreshPrices() {
+  try {
+    const resp = await fetch(API_PRICES);
+    const data = await resp.json();
+    data.prices.forEach(p => {
+      const row = document.querySelector(`tr[data-crypto-id='${p.id}']`);
+      if (row) {
+        row.querySelector('.price').textContent = p.price === null ? '-' : p.price.toFixed(6);
+        row.querySelector('.ts').textContent = p.timestamp || '-';
+      }
+    });
+  } catch (e) {
+    console.error('price refresh error', e);
+  }
+}
+
+let chart = null;
+async function updateChart(cryptoId) {
+  try {
+    const resp = await fetch(API_CHART(cryptoId));
+    const data = await resp.json();
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Price (USD)',
+          data: data.values,
+          fill: false,
+          tension: 0.1,
+        }]
+      },
+      options: {
+        scales: { x: { display: true }, y: { beginAtZero: false } }
+      }
+    });
+  } catch (e) {
+    console.error('chart error', e);
+  }
+}
+
+document.getElementById('crypto-select').addEventListener('change', (ev) => {
+  updateChart(ev.target.value);
+});
+
+// initial:
+refreshPrices();
+setInterval(refreshPrices, AUTO_REFRESH_INTERVAL);
+
+// chart initial:
+const startCrypto = document.getElementById('crypto-select').value;
+if (startCrypto) updateChart(startCrypto);
+</script>
+</body>
+</html>
