@@ -131,6 +131,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOGS_DIR, exist_ok=True)  # Create folder if it doesn't exist
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -141,7 +144,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'price_alerts.log'),
+            'filename': os.path.join(LOGS_DIR, 'price_alerts.log'),
             'formatter': 'standard',
         },
     },
@@ -153,4 +156,3 @@ LOGGING = {
         },
     },
 }
-
