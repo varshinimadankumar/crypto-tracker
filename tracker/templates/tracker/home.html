@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto Price Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #4CAF50; color: white; }
+        h1, h2 { text-align: center; }
+        .alerts { margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <h1>Crypto Price Tracker</h1>
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Symbol</th>
+            <th>Price (USD)</th>
+        </tr>
+        {% for coin in coins %}
+        <tr>
+            <td>{{ coin.name }}</td>
+            <td>{{ coin.symbol }}</td>
+            <td>${{ coin.latest_price|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="alerts">
+        <h2>Recent Alerts</h2>
+        {% if last_alerts %}
+        <ul>
+            {% for alert in last_alerts %}
+                <li>{{ alert.timestamp }} - {{ alert.coin.name }} ({{ alert.coin.symbol }}) - {{ alert.direction }} {{ alert.target_price }} USD</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <p>No alerts yet.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,49 +1,23 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
-from .models import CryptoCurrency, PricePoint, Alert
-from .forms import AlertForm
-from django.views.decorators.http import require_GET
+from django.shortcuts import render
+from tracker.models import CryptoCurrency, PriceAlert
+from tracker.management.commands.fetch_prices import Command as FetchPricesCommand
+import logging
 
-def index(request):
-    cryptos = CryptoCurrency.objects.all()
-    latest_prices = []
-    for c in cryptos:
-        latest = c.prices.order_by('-timestamp').first()
-        latest_prices.append({
-            'id': c.id,
-            'name': c.name,
-            'symbol': c.symbol,
-            'price': float(latest.price) if latest else None,
-            'timestamp': latest.timestamp.isoformat() if latest else None
-        })
-    return render(request, 'tracker/index.html', {'prices': latest_prices, 'cryptos': cryptos, 'alert_form': AlertForm()})
+logger = logging.getLogger('tracker')
 
-@require_GET
-def api_prices(request):
-    cryptos = CryptoCurrency.objects.all()
-    data = []
-    for c in cryptos:
-        latest = c.prices.order_by('-timestamp').first()
-        data.append({
-            'id': c.id,
-            'name': c.name,
-            'symbol': c.symbol,
-            'price': float(latest.price) if latest else None,
-            'timestamp': latest.timestamp.isoformat() if latest else None
-        })
-    return JsonResponse({'prices': data})
+def home(request):
+    # Fetch latest prices each time homepage is loaded
+    fetcher = FetchPricesCommand()
+    fetcher.handle()
 
-@require_GET
-def api_chart(request, crypto_id):
-    points = PricePoint.objects.filter(crypto_id=crypto_id).order_by('timestamp')[:500]
-    labels = [p.timestamp.strftime('%Y-%m-%d %H:%M:%S') for p in points]
-    values = [float(p.price) for p in points]
-    return JsonResponse({'labels': labels, 'values': values})
+    # Get latest prices from database
+    coins = CryptoCurrency.objects.all().order_by('name')
 
-def create_alert(request):
-    if request.method == 'POST':
-        form = AlertForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('tracker:index')
-    return redirect('tracker:index')
+    # Optionally, fetch last alerts for display
+    last_alerts = PriceAlert.objects.order_by('-timestamp')[:5]  # latest 5 alerts
+
+    context = {
+        'coins': coins,
+        'last_alerts': last_alerts,
+    }
+    return render(request, 'tracker/home.html', context)
