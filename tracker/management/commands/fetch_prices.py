@@ -17,7 +17,7 @@ class Command(BaseCommand):
         parser.add_argument('--vs', default='usd', help='fiat currency (default: usd)')
 
     def handle(self, *args, **options):
-        vs = options['vs']
+        vs = options.get('vs', 'USD')
         cryptos = list(CryptoCurrency.objects.all())
         if not cryptos:
             self.stdout.write(self.style.WARNING("No cryptocurrencies configured. Add via admin."))

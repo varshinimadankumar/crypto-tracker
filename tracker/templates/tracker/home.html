@@ -22,23 +22,24 @@
             <th>Price (USD)</th>
         </tr>
         {% for coin in coins %}
-        <tr>
-            <td>{{ coin.name }}</td>
-            <td>{{ coin.symbol }}</td>
-            <td>${{ coin.latest_price|floatformat:2 }}</td>
-        </tr>
-        {% endfor %}
+<tr>
+    <td>{{ coin.name }}</td>
+    <td>{{ coin.symbol }}</td>
+    <td>${{ coin.price|default:"N/A" }}</td>
+</tr>
+{% endfor %}
+
     </table>
 
     <div class="alerts">
         <h2>Recent Alerts</h2>
         {% if last_alerts %}
         <ul>
-            {% for alert in last_alerts %}
-                <li>{{ alert.timestamp }} - {{ alert.coin.name }} ({{ alert.coin.symbol }}) - {{ alert.direction }} {{ alert.target_price }} USD</li>
-            {% endfor %}
-        </ul>
-        {% else %}
+    {% for alert in last_alerts %}
+        <li>{{ alert.last_triggered|date:"Y-m-d H:i:s" }} - {{ alert.crypto.name }} ({{ alert.crypto.symbol }}) - {{ alert.direction }} {{ alert.target_price }} USD</li>
+    {% endfor %}
+	</ul>
+	{% else %}
             <p>No alerts yet.</p>
         {% endif %}
     </div>

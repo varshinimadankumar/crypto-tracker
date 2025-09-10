@@ -1,14 +1,17 @@
 # Create your models here.
 from django.db import models
 
+# tracker/models.py
+from django.db import models
+from decimal import Decimal
+
 class CryptoCurrency(models.Model):
     name = models.CharField(max_length=100)
-    symbol = models.CharField(max_length=20)
-    coingecko_id = models.CharField(max_length=100, unique=True,
-                                    help_text="CoinGecko id (e.g. 'bitcoin', 'ethereum')")
+    symbol = models.CharField(max_length=10)
+    coingecko_id = models.CharField(max_length=50)
 
     def __str__(self):
-        return f"{self.name} ({self.symbol})"
+        return self.symbol
 
 class PricePoint(models.Model):
     crypto = models.ForeignKey(CryptoCurrency, on_delete=models.CASCADE, related_name='prices')
