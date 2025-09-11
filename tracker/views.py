@@ -50,7 +50,7 @@ def home(request):
     if request.method == "POST":
         for crypto in cryptos:
             price = response.get(crypto.coingecko_id, {}).get("usd", 0)
-            amount = float(request.POST.get(f"amount_{crypto.id}", 0))
+            amount = float(request.POST.get(f"amount_{crypto.id}") or 0)
             value = amount * price
             total_value += value
 
