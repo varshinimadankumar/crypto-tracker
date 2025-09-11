@@ -22,9 +22,9 @@ Tech Stack (How it is built)
 how to run:
 *In the root folder terminal,give the command:py manage.py runserver
 *then,you will see the web page:
-<img width="1912" height="889" alt="Screenshot 2025-09-11 112209" src="https://github.com/user-attachments/assets/dabb06ea-777e-4c5c-bc42-e6e0af8bc077" />
-*Then,use portfolio in the website to calculate the total amount:http://127.0.0.1:8000/portfolio/
+<img width="1776" height="869" alt="Screenshot 2025-09-11 214324" src="https://github.com/user-attachments/assets/5ae72bef-9736-4964-9e67-4fd57ea4f44b" />
+*Then,when you navigate to portfolio tab
 *you will get a web page like this:
-<img width="1802" height="896" alt="Screenshot 2025-09-11 115504" src="https://github.com/user-attachments/assets/15bc1859-cac7-477b-b499-308e350a055f" />
-
+<img width="1852" height="878" alt="Screenshot 2025-09-11 214353" src="https://github.com/user-attachments/assets/80fa0f19-f0d9-4e35-840f-9e3a3ab55c10" />
+where you can calculate your total amount.
 
