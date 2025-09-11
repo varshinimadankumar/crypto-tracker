@@ -1,6 +1,10 @@
 from django.shortcuts import render
-from tracker.models import CryptoCurrency, PricePoint, Alert
+from tracker.models import CryptoCurrency, PricePoint, Alert,Portfolio
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .forms import PortfolioForm
+from decimal import Decimal
+import requests
 
 def api_chart(request, crypto_id):
     try:
@@ -18,28 +22,54 @@ def api_prices(request):
     return JsonResponse(data)
 
 
+@login_required
 def home(request):
-    coins = CryptoCurrency.objects.all()
+    # Fetch crypto prices
+    cryptos = CryptoCurrency.objects.all()
+    ids = ",".join([c.coingecko_id for c in cryptos])
+    url = f"https://api.coingecko.com/api/v3/simple/price?ids={ids}&vs_currencies=usd"
 
-    # Attach latest price dynamically from PricePoint
+    try:
+        response = requests.get(url, timeout=10).json()
+    except Exception:
+        response = {}
+
     coin_data = []
-    for coin in coins:
-        latest = PricePoint.objects.filter(crypto=coin).order_by('-timestamp').first()
+    for crypto in cryptos:
+        price = response.get(crypto.coingecko_id, {}).get("usd", 0)
         coin_data.append({
-            'name': coin.name,
-            'symbol': coin.symbol,
-            'price': latest.price if latest else None
+            "id": crypto.id,
+            "name": crypto.name,
+            "symbol": crypto.symbol,
+            "price": price,
         })
 
-    # Get last 5 triggered alerts
-    last_alerts = Alert.objects.filter(last_triggered__isnull=False).order_by('-last_triggered')[:5]
+    # Handle portfolio form
+    total_value = 0
+    coin_values = []
+    if request.method == "POST":
+        for crypto in cryptos:
+            price = response.get(crypto.coingecko_id, {}).get("usd", 0)
+            amount = float(request.POST.get(f"amount_{crypto.id}", 0))
+            value = amount * price
+            total_value += value
 
-    context = {
-        'coins': coin_data,
-        'last_alerts': last_alerts,
-    }
+            coin_values.append({
+                "id": crypto.id,
+                "name": crypto.name,
+                "symbol": crypto.symbol,
+                "price": price,
+                "amount": amount,
+                "value": value
+            })
 
-    return render(request, 'tracker/home.html', context)
+    return render(request, "tracker/home.html", {
+        "coin_data": coin_data,
+        "coin_values": coin_values,
+        "total_value": total_value,
+    })
+
+
 def create_alert(request):
     if request.method == 'POST':
         form = AlertForm(request.POST)
@@ -50,4 +80,22 @@ def create_alert(request):
     else:
         form = AlertForm()
     
-    return render(request, 'tracker/create_alert.html', {'form': form})
+@login_required
+def add_to_portfolio(request):
+    if request.method == 'POST':
+        form = PortfolioForm(request.POST)
+        if form.is_valid():
+            portfolio_entry, created = Portfolio.objects.get_or_create(
+                user=request.user,
+                crypto=form.cleaned_data['crypto'],
+                defaults={'amount': form.cleaned_data['amount']}
+            )
+            if not created:
+                portfolio_entry.amount += form.cleaned_data['amount']
+                portfolio_entry.save()
+            return redirect('tracker:portfolio')
+    else:
+        form = PortfolioForm()
+    return render(request, 'tracker/add_to_portfolio.html', {'form': form})
+
+

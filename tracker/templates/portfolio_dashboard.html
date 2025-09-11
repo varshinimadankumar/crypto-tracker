@@ -1,0 +1,26 @@
+<h1>Crypto Portfolio Calculator</h1>
+
+<form method="post">
+  {% csrf_token %}
+  <table border="1">
+    <tr>
+      <th>Crypto</th>
+      <th>Live Price (USD)</th>
+      <th>Number of Coins You Own</th>
+      <th>Total Value (USD)</th>
+    </tr>
+    {% for coin in coin_values %}
+    <tr>
+      <td>{{ coin.name }} ({{ coin.symbol }})</td>
+      <td>${{ coin.price }}</td>
+      <td>
+        <input type="number" step="any" name="amount_{{ coin.id }}" value="{{ coin.amount }}">
+      </td>
+      <td>${{ coin.value }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <p><b>Total Portfolio Value:</b> ${{ total_value }}</p>
+  <button type="submit">Calculate Total</button>
+</form>
